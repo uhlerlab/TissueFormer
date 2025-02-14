@@ -12,12 +12,12 @@ class Gene_Encoder(nn.Module):
     def forward(self, x, gene_idx):
         gene_embs = self.gene_embeddings[gene_idx] # [G, H]
         cell_embs = torch.matmul(x, gene_embs) # [C, G] * [G, H] -> [C, H]
-        norm = torch.matmul(x, torch.ones((x.shape[1], 1), device=x.device)) + 1e-4
-        cell_embs = cell_embs / norm # [C, H] / [C, 1] -> [C, H]
+        # norm = torch.matmul(x, torch.ones((x.shape[1], 1), device=x.device)) + 1e-4
+        # cell_embs = cell_embs / norm # [C, H] / [C, 1] -> [C, H]
         return cell_embs
 
 class Model_Pretrain(nn.Module):
-    def __init__(self, encoder1, encoder2, gene_embeddings, reg_w=1.0, ge_trainable=True, ge_pretrained=True):
+    def __init__(self, encoder1, encoder2, gene_embeddings, reg_w=1.0, ge_trainable=True, ge_pretrained=False):
         super(Model_Pretrain, self).__init__()
 
         self.encoder1 = encoder1
@@ -29,15 +29,19 @@ class Model_Pretrain(nn.Module):
         self.encoder1.reset_parameters()
         self.encoder2.reset_parameters()
 
-    def forward(self, x1, x2, gene_idx, edge_index, edge_weight):
+    def forward(self, x1, x2, gene_idx, edge_index, edge_weight=None):
         z1 = self.encoder1(x1, edge_index, edge_weight)
 
         x2 = self.gene_encoder(x2, gene_idx)
         z2 = self.encoder2(x2, edge_index, edge_weight)
         return z1, z2
 
-    def loss(self, x1, x2, gene_idx, edge_index=None, edge_weight=None):
+    def loss(self, x1, x2, gene_idx, train_idx=None, edge_index=None, edge_weight=None):
         z1, z2 = self.forward(x1, x2, gene_idx, edge_index, edge_weight)
+
+        if train_idx is not None:
+            z1, z2 = z1[train_idx], z2[train_idx]
+
         z1 = z1 / (torch.norm(z1, p=2, dim=-1, keepdim=True) + 1e-4) # [N, D]
         z2 = z2 / (torch.norm(z2, p=2, dim=-1, keepdim=True) + 1e-4)  # [N, D]
 
@@ -46,20 +50,3 @@ class Model_Pretrain(nn.Module):
         loss_entropy = (torch.log(torch.multiply(torch.sum(z2, 0, keepdim=True), z1).sum(-1) + 2*N).mean()
                     + torch.log(torch.multiply(torch.sum(z1, 0, keepdim=True), z2).sum(-1) + 2*N).mean()) / 2.
         return loss_align - self.reg_w * loss_entropy
-
-class Model_Predict(nn.Module):
-    def __init__(self, encoder1, hidden_channels, out_channels):
-        super(Model_Predict, self).__init__()
-
-        self.encoder1 = encoder1
-        self.fc_out = nn.Linear(hidden_channels, out_channels)
-
-    def reset_parameters(self):
-        self.encoder1.reset_parameters()
-        self.fc_out.reset_parameters()
-
-    def forward(self, x, edge_index=None, edge_weight=None):
-        z = self.encoder1(x, edge_index, edge_weight)
-        pred = self.fc_out(z) # [C, total G]
-        # pred = pred_all[:, gene_idx] # [C, total G] -> [C, G]
-        return pred

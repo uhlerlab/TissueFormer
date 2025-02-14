@@ -37,8 +37,8 @@ def full_attention_conv(qs, ks, vs, output_attn=False):
 
     # compute attention for visualization if needed
     if output_attn:
-        attention = torch.einsum("nhm,lhm->nlh", qs, ks) / attention_normalizer # [N, L, H]
-
+        # attention = (torch.einsum("nhm,lhm->nlh", qs, ks) + 1) / attention_normalizer.transpose(1, 2) # [N, L, H]
+        attention = torch.einsum("nhm,lhm->nlh", qs, ks) # [N, L, H]
 
     if output_attn:
         return attn_output, attention
@@ -100,16 +100,14 @@ class TransConv(nn.Module):
 
         # use input graph for gcn conv
         if self.use_graph:
-            print(1)
             gnn_input = self.Wg(source_input)
             gnn_output = graph_convolution_conv(gnn_input, edge_index, edge_weight)
             final_output += gnn_output
         if self.use_residual:
-            print(2)
             final_output += self.Wr(source_input)
 
         if output_attn:
-            return final_output, attn
+            return final_output, attn.mean(dim=-1)
         else:
             return final_output
 
@@ -121,7 +119,7 @@ class Transformer(nn.Module):
     return y_hat predicted logits [N, C]
     '''
     def __init__(self, in_channels, hidden_channels, num_layers_prop=3, num_layers_mlp=3, num_attn_heads=1,
-                 dropout=0.2, use_bn=True, use_graph=True, use_residual=True):
+                 dropout=0., use_bn=True, use_graph=True, use_residual=True):
         super(Transformer, self).__init__()
 
         layers_in = [nn.Linear(in_channels, hidden_channels), nn.BatchNorm1d(hidden_channels), nn.ELU(), nn.Dropout(dropout)]
@@ -137,7 +135,8 @@ class Transformer(nn.Module):
         self.bns = nn.ModuleList()
         for i in range(num_layers_prop):
             self.convs.append(TransConv(hidden_channels, hidden_channels, num_heads=num_attn_heads, use_graph=use_graph, use_residual=use_residual))
-            self.bns.append(nn.BatchNorm1d(hidden_channels))
+            # self.bns.append(nn.BatchNorm1d(hidden_channels))
+            self.bns.append(nn.LayerNorm(hidden_channels))
 
         self.dropout = dropout
         self.activation = F.elu
@@ -164,6 +163,7 @@ class Transformer(nn.Module):
         for i, conv in enumerate(self.convs):
             # graph convolution with DIFFormer layer
             x = conv(x, x, edge_index, edge_weight)
+            x = x + layer_[-1]
             if self.use_bn:
                 x = self.bns[i](x)
             x = self.activation(x)
@@ -172,12 +172,26 @@ class Transformer(nn.Module):
 
         return x
 
+    def get_embeddings(self, x, edge_index=None, edge_weight=None):
+        layer_ = []
+        x = self.mlp_in(x)
+        layer_.append(x)
+        for i, conv in enumerate(self.convs):
+            x = conv(x, x, edge_index, edge_weight)
+            x = x + layer_[-1]
+            if self.use_bn:
+                x = self.bns[i](x)
+            x = self.activation(x)
+            layer_.append(x)
+        return torch.stack(layer_, dim=0) # [layer num, N, D]
+
     def get_attentions(self, x, edge_index=None, edge_weight=None):
         layer_, attentions = [], []
         x = self.mlp_in(x)
         layer_.append(x)
         for i, conv in enumerate(self.convs):
             x, attn = conv(x, x, edge_index, edge_weight, output_attn=True)
+            x = x + layer_[-1]
             attentions.append(attn)
             if self.use_bn:
                 x = self.bns[i](x)

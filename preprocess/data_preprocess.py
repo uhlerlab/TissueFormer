@@ -85,7 +85,7 @@ class Preprocessor:
         Args:
 
         adata (:class:`AnnData`):
-            The :class:`AnnData` object to data_prepare.
+            The :class:`AnnData` object to preprocess.
         batch_key (:class:`str`, optional):
             The key of :class:`AnnData.obs` to use for batch information. This arg
             is used in the highly variable gene selection step.
@@ -217,7 +217,7 @@ class Preprocessor:
         Args:
 
         adata (:class:`AnnData`):
-            The :class:`AnnData` object to data_prepare.
+            The :class:`AnnData` object to preprocess.
         obs_key (:class:`str`, optional):
             The key of :class:`AnnData.obs` to use for batch information. This arg
             is used in the highly variable gene selection step.
