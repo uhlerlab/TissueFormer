@@ -49,26 +49,26 @@ Create a new environment with the packages provided by `environment.yml`:
 
 2. Data preprocessing
 
-We provide the [instruction]() for using our data preprocessing pipeline.
+We provide the [instruction](https://github.com/qitianwu/TissueFormer/blob/main/preprocess/instruction.md) for using our data preprocessing pipeline.
 
 3. Training (pretraining and finetuning)
 
 TissueFormer adopts two-stage curriculum learning for pretraining: the model was first trained with spot-resolution data (e.g., Visium slides) and further trained with cell-resolution data (e.g., Xenium slides).
 For applications, the pretrained TissueFormer can be directly applied to zero-shot predictions on new datasets or finetuned with new data. 
-We provide the [instruction]() for using our pipeline of pretraining and finetuning.
+We provide the [instruction](https://github.com/qitianwu/TissueFormer/blob/main/training/instruction.md) for using our pipeline of pretraining and finetuning.
 
 4. Inference for prediction
 
 After pretraining, TissueFormer is capable of handling various predictive tasks only using histology images of test samples. 
 One typical task is cross-modality generation, i.e., predicting spatial gene expression from histology images. 
 Furthermore, the pretrained model can be applied to predictions at different biological scales (cell-level, region-level, slide-level) from histology images.
-We provide the [instruction]() for applying TissueFormer to predictions.
+We provide the [instruction](https://github.com/qitianwu/TissueFormer/blob/main/prediction/instruction.md) for applying TissueFormer to predictions.
 
 5. Inference for analysis
 
 Apart from predictive tasks, TissueFormer supports analysis of intercellular communication and cell subtying from histology images. 
 For these, the pretrained model provides whole-slide cell-cell attention maps and cell-level embeddings for interpreting and analyzing the mechanism. 
-We provide the [instruction]() for applying TissueFormer to analysis.
+We provide the [instruction](https://github.com/qitianwu/TissueFormer/blob/main/analysis/instruction.md) for applying TissueFormer to analysis.
 
 6. Visualization
 
@@ -92,4 +92,4 @@ Applying TissueFormer to any new dataset typically involves the following steps.
 4. Apply the model for prediction (e.g., predict gene expression from histology images)
 5. Apply the model for analysis (extract the cell embeddings and attention maps)
 
-For detailed guideline, please refer to this [Demo]().
+For detailed guideline, please refer to this [demo](https://github.com/qitianwu/TissueFormer/blob/main/demo.ipynb).
