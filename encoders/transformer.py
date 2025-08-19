@@ -62,7 +62,7 @@ def graph_convolution_conv(x, edge_index, edge_weight):
 
 class TransConv(nn.Module):
     '''
-    one DIFFormer layer
+    one Transformer layer
     '''
     def __init__(self, in_channels, out_channels, num_heads, use_graph=True, use_residual=True):
         super(TransConv, self).__init__()
@@ -113,7 +113,7 @@ class TransConv(nn.Module):
 
 class Transformer(nn.Module):
     '''
-    DIFFormer model class
+    Transformer model class
     x: input node features [N, D]
     edge_index: 2-dim indices of edges [2, E]
     return y_hat predicted logits [N, C]

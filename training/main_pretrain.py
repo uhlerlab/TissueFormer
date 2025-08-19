@@ -33,8 +33,9 @@ args = parser.parse_args()
 fix_seed(args.seed)
 
 dir_path = '/data/wuqitian/hest_data_visium_protein_preprocess'
-meta_info = pd.read_csv("../data/meta_info_visium.csv")
+meta_info = pd.read_csv("../../data/meta_info_visium.csv")
 meta_info = meta_info[meta_info['tech']!='Xenium']
+pretrain_model_path = f'../model_checkpoints/{args.method}_pretrain_visium_{args.domain_protocol}.pth'
 
 if args.domain_protocol == 'organ':
     # from frequent organs to rare organs
@@ -44,20 +45,12 @@ if args.domain_protocol == 'organ':
 elif args.domain_protocol == 'mouse2human':
     # from mouse to human
     pretrain_samples = meta_info[meta_info['species']=='Mus musculus']['sample'].tolist()
-elif args.domain_protocol == 'human2mouse':
-    # from mouse to human
-    pretrain_samples = meta_info[meta_info['species']=='Homo sapiens']['sample'].tolist()
-elif args.domain_protocol == 'all':
-    # all slides
-    pretrain_samples = meta_info['sample'].tolist()
-elif args.domain_protocol == 'all_small':
+elif args.domain_protocol in ['all', 'all_small']:
     # all slides
     pretrain_samples = meta_info['sample'].tolist()
 else:
     raise NotImplementedError
 print(len(pretrain_samples), len(meta_info))
-
-pretrain_model_path = f'../model_checkpoints/{args.method}_pretrain_visium_{args.domain_protocol}.pth'
 
 if args.cpu:
     device = torch.device("cpu")

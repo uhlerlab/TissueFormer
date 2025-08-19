@@ -38,7 +38,7 @@ else:
     device = torch.device("cuda:" + str(args.device)) if torch.cuda.is_available() else torch.device("cpu")
 
 dir_path = '/data/wuqitian/lung_preprocess'
-meta_info = pd.read_csv("../data/meta_info_lung.csv")
+meta_info = pd.read_csv("../../data/meta_info_lung.csv")
 he_annotate_data = pd.read_csv(open('/data/wuqitian/lung/HE_annotations/cells_partitioned_by_annotation.csv', 'r', encoding='utf-8'))
 sample_id_map = {
  'VUHD095': 'VUHD095',
@@ -85,19 +85,36 @@ else:
 
 args.gene_total_num = 340
 if args.evaluate_task == 'cell_type_classification':
-    args.cell_type_num = 47
-elif args.evaluate_task == 'cell_lineage_classification':
-    args.cell_type_num = 4
+    args.cell_type_num = 2
+    args.gene_total_num = 23258
+    train_samples = ['VUHD095', 'THD0011', 'VUHD116A', 'VUHD116B', 'VUHD069', 'TILD117LA', 'VUILD110LA', 'VUILD96LA', 'VUILD102LA',
+     'VUILD48LA1', 'VUILD78MA', 'VUILD115MA', 'VUILD104MA1', 'VUILD105MA1', 'VUILD96MA', 'VUILD105MA2', 'VUILD107MA',
+     'TILD175MA', 'VUILD104MA2', 'VUILD106MA']
+    test_samples = ['VUILD48LA2', 'THD0008', 'VUHD113', 'VUILD91MA', 'VUILD78LA', 'VUILD102MA']
+    test_samples += ['TILD315MA', 'TILD299MA', 'VUILD58MA',
+                     'TILD028LA', 'TILD111LA', 'TILD080LA', 'TILD130LA', 'VUILD49LA',
+                     'VUHD090', 'VUHD038']
 elif args.evaluate_task == 'niche_classification':
     args.cell_type_num = 2
     args.gene_total_num = 23258
-    # train_samples = ['VUILD106MA', 'TILD175MA', 'VUILD107MA', 'VUILD105MA1', 'VUILD78MA', 'VUILD104MA2', 'VUILD105MA1', 'VUILD115MA']
-    # test_samples = ['TILD117LA', 'VUILD110LA', 'VUILD96LA', 'VUILD78LA', 'THD0008', 'VUHD069']
-    train_samples = meta_info[meta_info['affect'] == 'Unaffected']['sample'].tolist()[:-2]
-    train_samples += meta_info[meta_info['affect'] == 'Less Affected']['sample'].tolist()[:-2]
-    train_samples += meta_info[meta_info['affect'] == 'More Affected']['sample'].tolist()[:-2]
-
-    test_samples = meta_info[~meta_info['sample'].isin(train_samples)]['sample'].tolist()
+    train_samples = ['VUHD095', 'THD0011', 'VUHD116A', 'VUHD116B', 'VUHD069', 'TILD117LA', 'VUILD110LA', 'VUILD96LA',
+                     'VUILD102LA',
+                     'VUILD48LA1', 'VUILD78MA', 'VUILD115MA', 'VUILD104MA1', 'VUILD105MA1', 'VUILD96MA', 'VUILD105MA2',
+                     'VUILD107MA',
+                     'TILD175MA', 'VUILD104MA2', 'VUILD106MA']
+    test_samples = ['VUILD48LA2', 'THD0008', 'VUHD113', 'VUILD91MA', 'VUILD78LA', 'VUILD102MA']
+elif args.evaluate_task == 'region_time_prediction':
+    args.cell_type_num = 1
+    args.gene_total_num = 23258
+    train_samples = ['VUHD095', 'THD0011', 'VUHD116A', 'VUHD116B', 'VUHD069', 'TILD117LA', 'VUILD110LA', 'VUILD96LA',
+                     'VUILD102LA',
+                     'VUILD48LA1', 'VUILD78MA', 'VUILD115MA', 'VUILD104MA1', 'VUILD105MA1', 'VUILD96MA', 'VUILD105MA2',
+                     'VUILD107MA',
+                     'TILD175MA', 'VUILD104MA2', 'VUILD106MA']
+    test_samples = ['VUILD48LA2', 'THD0008', 'VUHD113', 'VUILD91MA', 'VUILD78LA', 'VUILD102MA']
+    test_samples += ['TILD315MA', 'TILD299MA', 'VUILD58MA',
+                     'TILD028LA', 'TILD111LA', 'TILD080LA', 'TILD130LA', 'VUILD49LA',
+                     'VUHD090', 'VUHD038']
 elif args.evaluate_task == 'he_annotation_classification':
     args.cell_type_num = 2
     if args.he_annotation_type == 'severe_fibrosis':
@@ -124,44 +141,22 @@ elif args.evaluate_task == 'he_annotation_classification':
         args.he_annotation_idx = 13
         train_samples = ['VUILD107MA', 'VUILD96MA', 'TILD175MA']
         test_samples = ['TILD117LA']
-
-    elif args.he_annotation_type == 'airway_smooth_muscle':
-        args.he_annotation_idx = 20
-        # ['VUILD110LA', 'VUILD115MA', 'TILD175MA', 'VUILD105MA1', 'VUILD104MA2'] []
-        train_samples = ['VUILD115MA', 'TILD175MA', 'VUILD105MA1', 'VUILD104MA2']
-        test_samples = ['VUILD110LA']
     elif args.he_annotation_type == 'granuloma':
         args.he_annotation_idx = 17
         train_samples = ['VUILD96MA', 'VUILD104MA1']
         test_samples = ['VUILD96LA']
     elif args.he_annotation_type == 'advanced_remodeling':
         args.he_annotation_idx = 6
-        train_samples = ['VUILD104MA1', 'VUILD78MA', 'VUILD102MA']
+        train_samples = ['VUILD102MA']
         test_samples = ['VUILD78LA']
-    elif args.he_annotation_type == 'remodeled_epithelium':
-        args.he_annotation_idx = 5
-        # ['VUILD115MA', 'VUILD104MA2', 'VUILD102LA', 'VUILD104MA1', 'VUILD96LA', 'TILD175MA', 'VUILD96MA', 'VUILD107MA', 'VUILD105MA2', 'VUILD48LA1', 'VUILD106MA', 'VUILD105MA1'] ['VUILD91MA', 'VUILD48LA2', 'VUILD102MA']
-        train_samples = ['VUILD104MA1', 'VUILD96MA']
-        test_samples = ['VUILD48LA2']
-
-
     elif args.he_annotation_type == 'small_airway':
-        # ['TILD175MA', 'VUILD106MA', 'VUILD110LA', 'VUILD78MA', 'VUHD116A', 'VUILD115MA', 'VUHD069', 'VUHD095']
         args.he_annotation_idx = 1
         train_samples = ['TILD175MA', 'VUILD115MA', 'VUILD78MA']
         test_samples = ['VUHD116A', 'VUHD069', 'VUHD095']
     elif args.he_annotation_type == 'venule':
-        # ['VUILD110LA', 'VUILD105MA1', 'VUILD106MA', 'VUILD102LA', 'VUILD96MA', 'VUILD115MA', 'VUILD96LA', 'VUHD116B', 'THD0011', 'TILD175MA', 'VUILD105MA2'] ['THD0008', 'VUILD91MA', 'VUILD102MA']
         args.he_annotation_idx = 4
         train_samples = ['VUILD105MA1', 'VUILD106MA', 'VUILD96MA', 'TILD175MA']
         test_samples = ['VUILD110LA']
-    elif args.he_annotation_type == 'artery':
-        # ['VUILD110LA', 'VUHD069', 'VUHD116B', 'VUILD106MA', 'TILD117LA', 'THD0011', 'VUILD115MA', 'VUILD105MA2',
-        #  'VUILD78MA', 'VUILD105MA1', 'VUHD095']['THD0008', 'VUILD78LA', 'VUILD48LA2']
-        args.he_annotation_idx = 3
-        train_samples = ['VUILD106MA', 'VUILD115MA', 'VUILD105MA2', 'VUILD105MA1']
-        test_samples = ['VUILD110LA', 'TILD117LA', 'VUHD069', 'VUHD116B']
-
 
 # image emb dim of foundation encoders
 if args.image_model == 'hoptimus':
@@ -175,13 +170,13 @@ elif args.image_model == 'pca':
 
 if args.evaluate_task == 'gene_regression':
     model_eval = parse_regression_method(args, device)
-elif args.evaluate_task in ['cell_type_classification', 'cell_lineage_classification', 'he_annotation_classification'] or args.method != 'ours-MLP':
+elif args.evaluate_task in ['he_annotation_classification'] or args.method != 'ours-MLP':
     model_eval = parse_classification_method(args, device)
-elif args.evaluate_task == 'niche_classification':
+elif args.evaluate_task in ['niche_classification', 'cell_type_classification', 'region_time_prediction']:
     gene_embeddings = torch.zeros((args.gene_total_num, args.gene_emb_dim), dtype=torch.float)
     model_eval = parse_dual_method(args, gene_embeddings, device)
 
-if args.evaluate_task == 'niche_classification':
+if args.evaluate_task in ['niche_classification', 'cell_type_classification', 'region_time_prediction']:
     if args.method in ['ours', 'ours-MLP']:
         pretrained_state_dict = torch.load(pretrain_model_path)
         pretrained_dict = {k: v for k, v in pretrained_state_dict.items() if k.startswith("encoder1.") or k.startswith("encoder2.") or k.startswith("gene_encoder.")}
@@ -195,11 +190,10 @@ if args.evaluate_task == 'niche_classification':
     if args.method == 'ours-MLP':
         for param in model_eval.encoder1.parameters():
             param.requires_grad = False
-        if not args.use_pred_gene:
-            for param in model_eval.encoder2.parameters():
-                param.requires_grad = False
-            for param in model_eval.gene_encoder.parameters():
-                param.requires_grad = False
+        for param in model_eval.encoder2.parameters():
+            param.requires_grad = False
+        for param in model_eval.gene_encoder.parameters():
+            param.requires_grad = False
 else:
     if args.method in ['ours', 'ours-MLP']:
         pretrained_state_dict = torch.load(pretrain_model_path)
@@ -215,14 +209,17 @@ else:
         for param in model_eval.encoder1.parameters():
             param.requires_grad = False
 
-if args.method not in ['ours', 'ours-KNN', 'hoptimus-KNN', 'mean-pooling']:
+if args.method not in ['ours']:
     optimizer = optim.Adam(filter(lambda p: p.requires_grad, model_eval.parameters()), lr=args.lr_evaluation,
                        weight_decay=args.wd_evaluation)
 
 if args.evaluate_task == 'gene_regression':
     criterion = nn.MSELoss()
-elif args.evaluate_task in ['cell_type_classification', 'cell_lineage_classification']:
-    criterion = nn.NLLLoss()
+elif args.evaluate_task == 'region_time_prediction':
+    criterion = nn.MSELoss()
+elif args.evaluate_task in ['cell_type_classification']:
+    # criterion = nn.NLLLoss()
+    criterion = FocalLoss(alpha=0.25, gamma=2, device=device)
 elif args.evaluate_task in ['niche_classification']:
     # criterion = nn.NLLLoss()
     criterion = FocalLoss(alpha=0.25, gamma=2, device=device)
@@ -236,11 +233,7 @@ train_dataloader = DataLoader(train_datasets, batch_size=1, shuffle=True)
 test_datasets = dataset_create(dir_path, test_samples, args, data_loader='lung', use_pred_gene=args.use_pred_gene)
 test_dataloader = DataLoader(test_datasets, batch_size=1, shuffle=False)
 
-# datasets = dataset_create_split(dir_path, test_samples[2], args, valid_prop=0., test_prop=0.1, data_loader='lung')
-# train_dataloader = DataLoader(datasets, batch_size=1, shuffle=True)
-# test_dataloader = DataLoader(datasets, batch_size=1, shuffle=False)
-
-if args.method in ['ours', 'ours-KNN', 'hoptimus-KNN', 'mean-pooling']:
+if args.method in ['ours']:
     run_update(model_eval, train_dataloader, device, use_gene_idx=True)
 else:
     for epoch in range(args.evaluation_epochs):
@@ -268,13 +261,39 @@ if args.evaluate_task == 'he_annotation_classification':
         write_obj.write(f'{args.method} {args.lr_evaluation} {args.evaluation_epochs} {formatted_scores} \n')
 
 elif args.evaluate_task == 'niche_classification':
-    # result_path = f'/data/wuqitian/analysis_pred_data/niche_classification/{args.niche_type}'
-    # y_pred, y_true = evaluate(model_eval, test_dataloader, device, args, output_result=True, use_gene_idx=True)
-    # y_pred, y_true = y_pred.cpu().numpy(), y_true.cpu().numpy()
-    # print(y_pred.shape, y_true.shape)
-    # np.save(result_path+f'_{args.method}', y_pred)
-    # np.save(result_path+'_true', y_true)
+    method = args.method
+    method += '-pred-gene' if args.use_pred_gene else ''
+    method += '-no-image' if args.no_image_encoder else ''
+    result_path = f'/data/wuqitian/analysis_pred_data/niche_classification/{args.niche_type}'
+    y_pred, y_true = evaluate(model_eval, test_dataloader, device, args, output_result=True, use_gene_idx=True)
+    y_pred, y_true = y_pred.cpu().numpy(), y_true.cpu().numpy()
+    np.save(result_path+f'_{method}', y_pred)
+    np.save(result_path+'_true', y_true)
 
     filename = f'/data/wuqitian/analysis_pred_data/niche_classification/hyper_search/{args.niche_type}.csv'
     with open(f"{filename}", 'a+') as write_obj:
-        write_obj.write(f'{args.method} {args.lr_evaluation} {args.evaluation_epochs} {formatted_scores} \n')
+        write_obj.write(f'{method} {args.lr_evaluation} {args.evaluation_epochs} {formatted_scores} \n')
+
+elif args.evaluate_task == 'cell_type_classification':
+    method = args.method
+    method += '-pred-gene' if args.use_pred_gene else ''
+    method += '-no-image' if args.no_image_encoder else ''
+    result_path = f'/data/wuqitian/analysis_pred_data/cell_type_classification/{args.cell_type.replace('/', '')}2'
+    y_pred, y_true = evaluate(model_eval, test_dataloader, device, args, output_result=True, use_gene_idx=True)
+    y_pred, y_true = y_pred.cpu().numpy(), y_true.cpu().numpy()
+    np.save(result_path+f'_{method}', y_pred)
+    np.save(result_path+'_true', y_true)
+
+    filename = f'/data/wuqitian/analysis_pred_data/cell_type_classification/hyper_search/{args.cell_type.replace('/', '')}.csv'
+    with open(f"{filename}", 'a+') as write_obj:
+        write_obj.write(f'{method} {args.lr_evaluation} {args.evaluation_epochs} {formatted_scores} \n')
+
+elif args.evaluate_task == 'region_time_prediction':
+    method = args.method
+    method += '-pred-gene' if args.use_pred_gene else ''
+    method += '-no-image' if args.no_image_encoder else ''
+    result_path = f'/data/wuqitian/analysis_pred_data/region_time_prediction/lumen_rank2'
+    y_pred, y_true = evaluate(model_eval, test_dataloader, device, args, output_result=True, use_gene_idx=True)
+    y_pred, y_true = y_pred.cpu().numpy(), y_true.cpu().numpy()
+    np.save(result_path+f'_{method}', y_pred)
+    np.save(result_path+'_true', y_true)

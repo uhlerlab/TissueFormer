@@ -84,7 +84,7 @@ def extract_patches_emb_from_cell_nucleus(HE_image, HE_nuc_image, patch_size=(22
         ),
     ])
 
-    # We recommend using mixed precision for faster inference.
+    # We recommend using mixed precision for faster prediction.
     with torch.autocast(device_type="cuda", dtype=torch.float16):
         with torch.inference_mode():
 
@@ -155,7 +155,7 @@ def extract_patches_emb_from_cell_centroid(HE_image, centroid, patch_size=(224, 
         ),
     ])
 
-    # We recommend using mixed precision for faster inference.
+    # We recommend using mixed precision for faster prediction.
     with torch.autocast(device_type="cuda", dtype=torch.float16):
         with torch.inference_mode():
 

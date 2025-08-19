@@ -2,7 +2,6 @@ import torch
 import pandas as pd
 
 class Logger(object):
-    """ Adapted from https://github.com/snap-stanford/ogb/ """
 
     def __init__(self, runs, metrics):
         self.valid_results = [[] for _ in range(runs)]

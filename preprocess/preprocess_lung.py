@@ -58,8 +58,8 @@ cl_map = {c: i for i, c in enumerate(cell_lineage)}
 cell_type = ['RASC', 'Secretory', 'Multiciliated', 'PNEC', 'Basal', 'Goblet', 'Proliferating Airway', 'AT2', 'Transitional AT2', 'AT1', 'KRT5-/KRT17+', 'Proliferating AT2', 'Langerhans cells', 'NK/NKT', 'Tregs', 'CD4+ T-cells', 'CD8+ T-cells', 'Proliferating T-cells', 'B cells', 'Plasma', 'pDCs', 'Proliferating NK/NKT', 'Proliferating B cells', 'cDCs', 'Mast', 'Interstitial Macrophages', 'Alveolar Macrophages', 'SPP1+ Macrophages', 'Neutrophils', 'Proliferating Myeloid', 'Migratory DCs', 'Macrophages - IFN-activated', 'Monocytes/MDMs', 'Basophils', 'Venous', 'Capillary', 'Lymphatic', 'Arteriole', 'SMCs/Pericytes', 'Alveolar FBs', 'Proliferating FBs', 'Inflammatory FBs', 'Activated Fibrotic FBs', 'Myofibroblasts', 'Subpleural FBs', 'Adventitial FBs', 'Mesothelial']
 ct_map = {c: i for i, c in enumerate(cell_type)}
 
-dir_path = '/data/lizhiyi/lung'
-preprocess_save_path = '/data/wuqitian/lung_preprocess'
+dir_path = '/data/wuqitian/lung' # modify to your own data directory path
+preprocess_save_path = '/data/wuqitian/lung_preprocess' # a new directory path for storing preprocessed data
 
 files = os.listdir(dir_path)
 
@@ -73,6 +73,13 @@ sample_id_map = {
 }
 he_annotate_type = ['normal_alveoli', 'small_airway', 'minimally_remodeled_alveoli', 'artery', 'venule', 'remodeled_epithelium', 'advanced_remodeling', 'fibrosis', 'multinucleated_cell', 'epithelial_detachment', 'mixed_inflammation', 'muscularized_artery', 'severe_fibrosis', 'large_airway', 'goblet_cell_metaplasia', 'hyperplastic_aec', 'fibroblastic_focus', 'granuloma', 'microscopic_honeycombing', 'TLS', 'airway_smooth_muscle', 'remnant_alveoli', 'giant_cell', 'interlobular_septum', 'emphysema']
 
+train_samples = ['VUHD095', 'THD0011', 'VUHD116A', 'VUHD116B', 'VUHD069', 'TILD117LA', 'VUILD110LA', 'VUILD96LA', 'VUILD102LA',
+     'VUILD48LA1', 'VUILD78MA', 'VUILD115MA', 'VUILD104MA1', 'VUILD105MA1', 'VUILD96MA', 'VUILD105MA2', 'VUILD107MA',
+     'TILD175MA', 'VUILD104MA2', 'VUILD106MA']
+test_samples = ['VUILD48LA2', 'THD0008', 'VUHD113', 'VUILD91MA', 'VUILD78LA', 'VUILD102MA']
+test_samples2 = ['VUHD090', 'TILD049MA', 'TILD028LA', 'TILD111LA', 'TILD315MA', 'TILD299MA', 'TILD080LA', 'TILD167LA', 'VUHD049',
+                 'VUILD142MA', 'VUILD141MA', 'TILD113LA', 'VUHD038', 'VUILD49LA', 'VUILD58MA', 'TILD130LA']
+
 samples, types, affects, status, percent = [], [], [], [], []
 
 for i, f in enumerate(files):
@@ -80,6 +87,9 @@ for i, f in enumerate(files):
     adata = sc.read(file_path)
     sample = f.split('.')[0]
     print(i, sample)
+
+    if sample in train_samples+test_samples:
+        continue
 
     # modify gene names, filter genes
     gene_name_new = []
@@ -150,10 +160,10 @@ for i, f in enumerate(files):
     status.append(meta_data[meta_data.obs['sample']==sample].obs['disease_status'].unique().tolist()[0])
     percent.append(meta_data[meta_data.obs['sample']==sample].obs['percent_pathology'].unique().tolist()[0])
 
-meta_info = {'sample': samples, 'type': types, 'affect': affects, 'status': status, 'percent_pathology': percent}
-meta_df = pd.DataFrame(meta_info)
-meta_df.to_csv('../data/meta_info_lung.csv', index=False)
-print(meta_df.shape)
+# meta_info = {'sample': samples, 'type': types, 'affect': affects, 'status': status, 'percent_pathology': percent}
+# meta_df = pd.DataFrame(meta_info)
+# meta_df.to_csv('../data/meta_info_lung.csv', index=False)
+# print(meta_df.shape)
 
 
 # dir_path2 = '/data/lizhiyi/lung_new'

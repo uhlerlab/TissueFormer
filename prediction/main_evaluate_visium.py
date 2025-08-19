@@ -32,11 +32,11 @@ args = parser.parse_args()
 fix_seed(args.seed)
 
 dir_path = '/data/wuqitian/hest_data_visium_protein_preprocess'
-meta_info = pd.read_csv("../data/meta_info_visium.csv")
+meta_info = pd.read_csv("../../data/meta_info_visium.csv")
 
-pretrain_model_path = f'../model_checkpoints/ours_pretrain_visium_{args.domain_protocol}_out.pth'
+pretrain_model_path = f'../model_checkpoints/ours_pretrain_visium_{args.domain_protocol}.pth'
 evaluation_model_path = f'../model_checkpoints/{args.method}_evaluate_visium_{args.domain_protocol}.pth'
-result_path = f'../result/{args.method}_visium_{args.domain_protocol}_out.csv'
+result_path = f'../result/{args.method}_visium_{args.domain_protocol}.csv'
 
 if args.cpu:
     device = torch.device("cpu")
@@ -57,7 +57,7 @@ elif args.image_model == 'pca':
     args.image_emb_dim = 100
 
 model_eval = parse_regression_method(args, device)
-if args.method in ['ours', 'ours-KNN', 'ours-MLP']:
+if args.method in ['ours', 'ours-MLP']:
     pretrained_state_dict = torch.load(pretrain_model_path)
     encoder1_pretrained_dict = {k: v for k, v in pretrained_state_dict.items() if k.startswith("encoder1.")}
     model_state_dict = model_eval.state_dict()
@@ -70,25 +70,25 @@ if args.method in ['ours', 'ours-KNN', 'ours-MLP']:
 if args.method == 'ours-MLP':
     for param in model_eval.encoder1.parameters():
         param.requires_grad = False
-if args.method not in ['ours', 'ours-KNN', 'hoptimus-KNN', 'mean-pooling']:
+if args.method not in ['ours']:
     optimizer = optim.Adam(filter(lambda p: p.requires_grad, model_eval.parameters()), lr=args.lr_evaluation,
                        weight_decay=args.wd_evaluation)
 criterion = nn.MSELoss()
 
 
 if args.domain_protocol == 'organ':
-    # from frequent organs to rare organs, zero-shot inference for evaluation
+    # from frequent organs to rare organs, zero-shot prediction for evaluation
     pretrain_organs = ['Spinal cord', 'Brain', 'Breast', 'Bowel', 'Skin']  # top five organs
     pretrain_samples = meta_info[meta_info['organ'].isin(pretrain_organs)]['sample'].tolist()
     test_samples = meta_info[~meta_info['organ'].isin(pretrain_organs)]['sample'].tolist()
     valid_samples = pretrain_samples[-100:]
-    train_samples = pretrain_samples[:20]
+    train_samples = pretrain_samples[:20] # reference data for in-context learning
 elif args.domain_protocol == 'mouse2human':
-    # from mouse to human, zero-shot inference for evaluation
+    # from mouse to human, zero-shot prediction for evaluation
     pretrain_samples = meta_info[meta_info['species'] == 'Mus musculus']['sample'].tolist()
     test_samples = meta_info[meta_info['species'] == 'Homo sapiens']['sample'].tolist()
-    valid_samples = pretrain_samples[20:]
-    train_samples = pretrain_samples[:20]
+    valid_samples = pretrain_samples[-100:]
+    train_samples = pretrain_samples[:20] # reference data for in-context learning
 else:
     raise NotImplementedError
 print(len(meta_info), len(pretrain_samples), len(train_samples), len(valid_samples), len(test_samples))
@@ -104,7 +104,7 @@ valid_dataloader = DataLoader(valid_datasets, batch_size=1, shuffle=False)
 test_datasets = dataset_create(dir_path, test_samples[:20], args)
 test_dataloader = DataLoader(test_datasets, batch_size=1, shuffle=False)
 
-if args.method in ['ours', 'ours-KNN', 'hoptimus-KNN', 'mean-pooling']:
+if args.method in ['ours']:
     run_update(model_eval, train_dataloader, device)
 else:
     for epoch in range(args.evaluation_epochs):

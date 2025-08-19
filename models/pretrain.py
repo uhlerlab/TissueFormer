@@ -46,7 +46,7 @@ class Model_Pretrain(nn.Module):
         z2 = z2 / (torch.norm(z2, p=2, dim=-1, keepdim=True) + 1e-4)  # [N, D]
 
         N = z1.shape[0]
-        loss_align = torch.multiply(z1, z2).sum(-1).mean()
-        loss_entropy = (torch.log(torch.multiply(torch.sum(z2, 0, keepdim=True), z1).sum(-1) + 2*N).mean()
-                    + torch.log(torch.multiply(torch.sum(z1, 0, keepdim=True), z2).sum(-1) + 2*N).mean()) / 2.
-        return loss_align - self.reg_w * loss_entropy
+        loss_align = - torch.multiply(z1, z2).sum(-1).mean()
+        loss_entropy = (torch.log(torch.multiply(torch.sum(z2, 0, keepdim=True), z1).sum(-1) + N).mean()
+                    + torch.log(torch.multiply(torch.sum(z1, 0, keepdim=True), z2).sum(-1) + N).mean()) / 2.
+        return loss_align + self.reg_w * loss_entropy

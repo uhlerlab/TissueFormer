@@ -44,6 +44,8 @@ class CustomDataset(Dataset):
             data.cell_mask = dataset['microphage_mask']
         if 'cell_mask' in dataset.keys():
             data.cell_mask = dataset['cell_mask']
+        if 'group_idx' in dataset.keys():
+            data.group_idx = dataset['group_idx']
 
         if 'edge_index' in dataset.keys():
             data.edge_index = dataset['edge_index']

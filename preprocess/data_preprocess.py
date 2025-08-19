@@ -7,9 +7,6 @@ import scanpy as sc
 from scanpy.get import _get_obs_rep, _set_obs_rep
 from anndata import AnnData
 
-import logging
-logger = logging.getLogger("scGPT")
-
 class Preprocessor:
     """
     Prepare data into training, valid and test split. Normalize raw expression

@@ -37,7 +37,7 @@ args = parser.parse_args()
 fix_seed(args.seed)
 
 dir_path = '/data/wuqitian/lung_preprocess'
-meta_info = pd.read_csv("../data/meta_info_lung.csv")
+meta_info = pd.read_csv("../../data/meta_info_lung.csv")
 
 if args.cpu:
     device = torch.device("cpu")
@@ -95,11 +95,6 @@ for k, v in encoder1_pretrained_dict.items():
 model_state_dict.update(encoder1_pretrained_dict)
 model_ours_visium.load_state_dict(model_state_dict)
 
-# hoptimus model
-# args.method = 'hoptimus-MLP'
-# model_hoptimus = parse_regression_method(args, device)
-# model_state_dict = torch.load('../model_checkpoints/hoptimus-MLP_evaluate_xenium_lung.pth')
-# model_hoptimus.load_state_dict(model_state_dict)
 
 # model update
 train_datasets = dataset_create(dir_path, train_samples, args, data_loader='lung')

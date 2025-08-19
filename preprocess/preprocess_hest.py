@@ -302,48 +302,14 @@ if __name__ == '__main__':
     save_path1 = '/data/wuqitian/hest_data_visium_protein'
     preprocess_save_path1 = '/data/wuqitian/hest_data_visium_protein_preprocess'
     meta_info_save_path1 = '../data/meta_info_visium.csv'
-    # convert_filter_gene_names(dir_path1, save_path1)
-    # gene_preprocess(save_path1, preprocess_save_path1, tech='visium')
-    # meta_data_info(preprocess_save_path1, meta_info_save_path1)
+    convert_filter_gene_names(dir_path1, save_path1)
+    gene_preprocess(save_path1, preprocess_save_path1, tech='visium')
+    meta_data_info(preprocess_save_path1, meta_info_save_path1)
 
     dir_path2 = '/data/lizhiyi/hest_converted/xenium_cell'
     save_path2 = '/data/wuqitian/hest_data_xenium_protein'
     preprocess_save_path2 = '/data/wuqitian/hest_data_xenium_protein_preprocess'
     meta_info_save_path2 = '../data/meta_info_xenium.csv'
-    # convert_filter_gene_names(dir_path2, save_path2)
-    # gene_preprocess(save_path2, preprocess_save_path2, tech='xenium')
-    # meta_data_info(preprocess_save_path2, meta_info_save_path2)
-
-
-    #
-    # files = os.listdir(preprocess_save_path1)
-    # for i, f in enumerate(files):
-    #     file_path = os.path.join(preprocess_save_path1, f)
-    #     adata = sc.read(file_path)
-    #     file_path2 = os.path.join(dir_path1, f)
-    #     adata2 = sc.read(file_path2)
-    #     sample = f.split('.')[0]
-    #     print(i, sample)
-    #     # adata.obsm["patch_embs_gigapath"] = adata2.obsm["patch_embs_gigapath"]
-    #     # adata.obsm["patch_embs_uni"] = adata2.obsm["patch_embs_uni"]
-    #     adata.obsm["patch_pca_100"] = adata2.obsm["patch_pca_100"]
-    #     adata.write_h5ad(os.path.join(preprocess_save_path1, sample) + '.h5ad')
-
-    dir_path2 = '/data/lizhiyi/hest_converted/xenium_cell/new'
-    files = os.listdir(preprocess_save_path2)
-    samples = ['TENX126', 'TENX124', 'TENX123', 'TENX122', 'TENX121', 'TENX119', 'TENX118']
-    for i, f in enumerate(files):
-        if f.split('.')[0] not in samples:
-            continue
-        file_path = os.path.join(preprocess_save_path2, f)
-        adata = sc.read(file_path)
-        file_path2 = os.path.join(dir_path2, f)
-        adata2 = sc.read(file_path2)
-        sample = f.split('.')[0]
-        print(sample)
-        print(adata)
-        print(adata2)
-        adata.obsm["patch_embs_gigapath"] = adata2.obsm["patch_embs_gigapath"]
-        adata.obsm["patch_embs_uni"] = adata2.obsm["patch_embs_uni"]
-        adata.obsm["patch_pca_100"] = adata2.obsm["patch_pca_100"]
-        adata.write_h5ad(os.path.join(preprocess_save_path1, sample) + '.h5ad')
+    convert_filter_gene_names(dir_path2, save_path2)
+    gene_preprocess(save_path2, preprocess_save_path2, tech='xenium')
+    meta_data_info(preprocess_save_path2, meta_info_save_path2)

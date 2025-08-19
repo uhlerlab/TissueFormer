@@ -110,7 +110,23 @@ def data_load_hest(dir_path, sample, args, filter_genes=True):
         dataset['hvg_gene_rank'] = torch.tensor(hvg_gene_rank, dtype=torch.long)
     return dataset
 
-def data_load_lung(dir_path, sample, args, use_pred_gene=False):
+def data_load_lung(dir_path, sample, args, use_pred_gene=False, split_with_region=False):
+    cell_type = ['RASC', 'Secretory', 'Multiciliated', 'PNEC', 'Basal', 'Goblet', 'Proliferating Airway', 'AT2',
+                 'Transitional AT2', 'AT1',
+                 'KRT5-/KRT17+', 'Proliferating AT2', 'Langerhans cells', 'NK/NKT', 'Tregs', 'CD4+ T-cells',
+                 'CD8+ T-cells',
+                 'Proliferating T-cells', 'B cells', 'Plasma', 'pDCs', 'Proliferating NK/NKT', 'Proliferating B cells',
+                 'cDCs', 'Mast',
+                 'Interstitial Macrophages', 'Alveolar Macrophages', 'SPP1+ Macrophages', 'Neutrophils',
+                 'Proliferating Myeloid',
+                 'Migratory DCs', 'Macrophages - IFN-activated', 'Monocytes/MDMs', 'Basophils', 'Venous', 'Capillary',
+                 'Lymphatic',
+                 'Arteriole', 'SMCs/Pericytes', 'Alveolar FBs', 'Proliferating FBs', 'Inflammatory FBs',
+                 'Activated Fibrotic FBs',
+                 'Myofibroblasts', 'Subpleural FBs', 'Adventitial FBs', 'Mesothelial']
+    ct_map = {c: i for i, c in enumerate(cell_type)}
+    ct_map_inv = {i: c for i, c in enumerate(cell_type)}
+
     dir_path = os.path.join(dir_path, sample) + '.h5ad'
     adata = sc.read(dir_path)
     X_log1p = adata.layers['X_log1p']
@@ -119,9 +135,7 @@ def data_load_lung(dir_path, sample, args, use_pred_gene=False):
     cell_by_gene = X_log1p[:, gene_mask]
     gene_index = adata.var['gene_filtered_idx'][gene_mask]
 
-    cell_type = adata.obs['final_CT']
-    cell_lineage = adata.obs['final_lineage']
-    he_annotation = adata.obsm['he_annotation']
+    cell_type_label = adata.obs['final_CT']
 
     cell_niche_T = adata.obs['TNiche']
     cell_niche_C = adata.obs['CNiche']
@@ -142,13 +156,9 @@ def data_load_lung(dir_path, sample, args, use_pred_gene=False):
     dataset['x'] = torch.tensor(cell_image_emb, dtype=torch.float)
     if args.evaluate_task == 'gene_regression':
         dataset['y'] = torch.tensor(cell_by_gene, dtype=torch.float)
-    elif args.evaluate_task == 'cell_type_classification':
-        dataset['y'] = torch.tensor(cell_type, dtype=torch.long)
-    elif args.evaluate_task == 'cell_lineage_classification':
-        dataset['y'] = torch.tensor(cell_lineage, dtype=torch.long)
     elif args.evaluate_task == 'niche_classification':
         if use_pred_gene:
-            file_path = '/data/wuqitian/analysis_pred_data/gene_expression_prediction/' + f'{sample}_ours.npy'
+            file_path = '/data/wuqitian/analysis_pred_data/gene_expression_prediction/' + f'{sample}_ours_in.npy'
             y_pred = np.load(file_path)
             dataset['x2'] = torch.tensor(y_pred, dtype=torch.float)
         else:
@@ -167,7 +177,45 @@ def data_load_lung(dir_path, sample, args, use_pred_gene=False):
         mask[sample_neg_idx] = True
         mask[pos_idx] = True
         dataset['cell_mask'] = mask
+    elif args.evaluate_task == 'cell_type_classification':
+        if use_pred_gene:
+            file_path = '/data/wuqitian/analysis_pred_data/gene_expression_prediction/' + f'{sample}_ours_region.npy'
+            y_pred = np.load(file_path)
+            dataset['x2'] = torch.tensor(y_pred, dtype=torch.float)
+        else:
+            dataset['x2'] = torch.tensor(cell_by_gene, dtype=torch.float)
+
+        cell_type = ct_map[args.cell_type.replace('_', ' ')]
+        dataset['y'] = torch.tensor((cell_type_label == cell_type), dtype=torch.long)
+        idx = torch.arange(0, dataset['y'].shape[0])
+        neg_idx = idx[dataset['y'] == 0]
+        pos_idx = idx[dataset['y'] == 1]
+        sample_neg_idx_ = torch.as_tensor(np.random.permutation(neg_idx.shape[0]))[:5 * pos_idx.shape[0]]
+        sample_neg_idx = neg_idx[sample_neg_idx_]
+        mask = torch.zeros_like(dataset['y'], dtype=torch.bool)
+        mask[sample_neg_idx] = True
+        mask[pos_idx] = True
+        dataset['cell_mask'] = mask
+    elif args.evaluate_task == 'region_time_prediction':
+        if use_pred_gene:
+            file_path = '/data/wuqitian/analysis_pred_data/gene_expression_prediction/' + f'{sample}_ours_region.npy'
+            y_pred = np.load(file_path)
+            dataset['x2'] = torch.tensor(y_pred, dtype=torch.float)
+        else:
+            dataset['x2'] = torch.tensor(cell_by_gene, dtype=torch.float)
+
+        lumen_rank = adata.obs['lumen_rank'].to_numpy()
+        lumen_rank = np.nan_to_num(lumen_rank, nan=-1)
+        lumen_rank_unique = np.sort(np.unique(lumen_rank))
+        lumen_rank_map = {k: i for i, k in enumerate(lumen_rank_unique)}
+        vectorized_lookup = np.vectorize(lumen_rank_map.get)
+        group_idx = vectorized_lookup(lumen_rank, None)
+        dataset['group_idx'] = torch.tensor(group_idx, dtype=torch.long)
+
+        dataset['y'] = torch.tensor(lumen_rank_unique, dtype=torch.float).reshape(-1, 1) / 100
+
     elif args.evaluate_task == 'he_annotation_classification':
+        he_annotation = adata.obsm['he_annotation']
         dataset['y'] = torch.tensor(he_annotation, dtype=torch.long)[:, args.he_annotation_idx]
         idx = torch.arange(0, dataset['y'].shape[0])
         neg_idx = idx[dataset['y'] == 0]
@@ -185,6 +233,13 @@ def data_load_lung(dir_path, sample, args, use_pred_gene=False):
 
     hvg_gene_rank = adata.var['highly_variable_rank'][gene_mask]
     dataset['hvg_gene_rank'] = torch.tensor(hvg_gene_rank, dtype=torch.long)
+
+    if split_with_region:
+        idx = torch.arange(0, dataset['y'].shape[0])
+        lumen_rank = adata.obs['lumen_rank'].to_numpy()
+        lumen_mask = torch.tensor(~np.isnan(lumen_rank), dtype=torch.bool)
+        train_idx, test_idx = idx[~lumen_mask], idx[lumen_mask]
+        dataset['split_idx'] = {'train_idx': train_idx, 'valid_idx': None, 'test_idx': test_idx}
     return dataset
 
 def data_load_kidney(dir_path, sample, args):
@@ -248,7 +303,7 @@ def dataset_create(dir_path, samples, args, data_loader='hest', filter_genes=Tru
         datasets.append(dataset)
     return CustomDataset(datasets)
 
-def dataset_create_split(dir_path, samples, args, valid_prop=0.1, test_prop=0.8, split='random', data_loader='hest', filter_genes=True):
+def dataset_create_split(dir_path, samples, args, valid_prop=0.1, test_prop=0.8, split='random', data_loader='hest', filter_genes=True, split_with_region=False):
     datasets = []
     if isinstance(samples, list):
         pbar = tqdm(samples, desc='loading dataset', ncols=100, ascii=True)
@@ -256,15 +311,18 @@ def dataset_create_split(dir_path, samples, args, valid_prop=0.1, test_prop=0.8,
             if data_loader == 'hest':
                 dataset = data_load_hest(dir_path, s, args, filter_genes)
             elif data_loader == 'lung':
-                dataset = data_load_lung(dir_path, s, args)
+                dataset = data_load_lung(dir_path, s, args, split_with_region=split_with_region)
             elif data_loader == 'kidney':
                 dataset = data_load_kidney(dir_path, s, args)
             idx = torch.arange(dataset['x'].shape[0])
             if split == 'random':
                 train_idx, valid_idx, test_idx = random_splits(idx, valid_prop, test_prop)
-            else:
+                dataset['split_idx'] = {'train_idx': train_idx, 'valid_idx': valid_idx, 'test_idx': test_idx}
+            elif split == 'spatial':
                 train_idx, valid_idx, test_idx = spatial_splits(dataset['cell_location'], idx, valid_prop, test_prop)
-            dataset['split_idx'] = {'train_idx': train_idx, 'valid_idx': valid_idx, 'test_idx': test_idx}
+                dataset['split_idx'] = {'train_idx': train_idx, 'valid_idx': valid_idx, 'test_idx': test_idx}
+            elif split == 'region':
+                pass
             datasets.append(dataset)
             pbar.clear()
             pbar.refresh()
@@ -272,15 +330,18 @@ def dataset_create_split(dir_path, samples, args, valid_prop=0.1, test_prop=0.8,
         if data_loader == 'hest':
             dataset = data_load_hest(dir_path, samples, args, filter_genes)
         elif data_loader == 'lung':
-            dataset = data_load_lung(dir_path, samples, args)
+            dataset = data_load_lung(dir_path, samples, args, split_with_region=split_with_region)
         elif data_loader == 'kidney':
             dataset = data_load_kidney(dir_path, samples, args)
         idx = torch.arange(dataset['x'].shape[0])
         if split == 'random':
             train_idx, valid_idx, test_idx = random_splits(idx, valid_prop, test_prop)
-        else:
+            dataset['split_idx'] = {'train_idx': train_idx, 'valid_idx': valid_idx, 'test_idx': test_idx}
+        elif split == 'spatial':
             train_idx, valid_idx, test_idx = spatial_splits(dataset['cell_location'], idx, valid_prop, test_prop)
-        dataset['split_idx'] = {'train_idx': train_idx, 'valid_idx': valid_idx, 'test_idx': test_idx}
+            dataset['split_idx'] = {'train_idx': train_idx, 'valid_idx': valid_idx, 'test_idx': test_idx}
+        elif split == 'region':
+            pass
         datasets.append(dataset)
     return CustomDataset(datasets)
 

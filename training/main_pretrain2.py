@@ -32,10 +32,9 @@ args = parser.parse_args()
 
 fix_seed(args.seed)
 
-
 if args.domain_protocol == 'sample':
     dir_path = '/data/wuqitian/hest_data_xenium_protein_preprocess'
-    meta_info = pd.read_csv("../data/meta_info_xenium.csv")
+    meta_info = pd.read_csv("../../data/meta_info_xenium.csv")
     meta_info = meta_info[meta_info['tech'] == 'Xenium']
     pretrain_samples = ['TENX126', 'TENX122', 'TENX121', 'TENX119', 'TENX118']
     pretrain_dataset = dataset_create_split(dir_path, pretrain_samples, args, valid_prop=0., test_prop=0.1)
@@ -43,12 +42,12 @@ if args.domain_protocol == 'sample':
 
 elif args.domain_protocol == 'sample+':
     dir_path = '/data/wuqitian/lung_preprocess'
-    meta_info = pd.read_csv("../data/meta_info_lung.csv")
+    meta_info = pd.read_csv("../../data/meta_info_lung.csv")
     pretrain_samples = meta_info['sample'].tolist()
     pretrain_dataset = dataset_create(dir_path, pretrain_samples, args)
 
     dir_path2 = '/data/wuqitian/hest_data_xenium_protein_preprocess'
-    meta_info2 = pd.read_csv("../data/meta_info_xenium.csv")
+    meta_info2 = pd.read_csv("../../data/meta_info_xenium.csv")
     meta_info2 = meta_info2[meta_info2['organ'] != 'Lung']
     meta_info2 = meta_info2[~meta_info2['sample'].isin(
         ['TENX125', 'TENX124', 'TENX110', 'TENX111', 'TENX139', 'TENX96', 'TENX99', 'TENX138', 'TENX95', 'TENX140',
@@ -60,14 +59,14 @@ elif args.domain_protocol == 'sample+':
 
 elif args.domain_protocol == 'sample+_small':
     dir_path = '/data/wuqitian/lung_preprocess'
-    meta_info = pd.read_csv("../data/meta_info_lung.csv")
+    meta_info = pd.read_csv("../../data/meta_info_lung.csv")
     pretrain_samples = meta_info[meta_info['affect'] == 'Unaffected']['sample'].tolist()[:-2]
     pretrain_samples += meta_info[meta_info['affect'] == 'Less Affected']['sample'].tolist()[:-2]
     pretrain_samples += meta_info[meta_info['affect'] == 'More Affected']['sample'].tolist()[:-2]
     pretrain_dataset = dataset_create(dir_path, pretrain_samples, args)
 
     dir_path2 = '/data/wuqitian/hest_data_xenium_protein_preprocess'
-    meta_info2 = pd.read_csv("../data/meta_info_xenium.csv")
+    meta_info2 = pd.read_csv("../../data/meta_info_xenium.csv")
     meta_info2 = meta_info2[meta_info2['organ'] != 'Lung']
     meta_info2 = meta_info2[~meta_info2['sample'].isin(
         ['TENX126', 'TENX125', 'TENX124', 'TENX123', 'TENX122', 'TENX121', 'TENX119', 'TENX118'])]
@@ -78,7 +77,7 @@ elif args.domain_protocol == 'sample+_small':
 
 elif args.domain_protocol == 'lung':
     dir_path = '/data/wuqitian/lung_preprocess'
-    meta_info = pd.read_csv("../data/meta_info_lung.csv")
+    meta_info = pd.read_csv("../../data/meta_info_lung.csv")
     pretrain_samples = meta_info[meta_info['affect']=='Unaffected']['sample'].tolist()[:-2]
     pretrain_samples += meta_info[meta_info['affect'] == 'Less Affected']['sample'].tolist()[:-2]
     pretrain_samples += meta_info[meta_info['affect'] == 'More Affected']['sample'].tolist()[:-2]
@@ -87,14 +86,14 @@ elif args.domain_protocol == 'lung':
 
 elif args.domain_protocol == 'lung+':
     dir_path = '/data/wuqitian/lung_preprocess'
-    meta_info = pd.read_csv("../data/meta_info_lung.csv")
+    meta_info = pd.read_csv("../../data/meta_info_lung.csv")
     pretrain_samples = meta_info[meta_info['affect']=='Unaffected']['sample'].tolist()[:-2]
     pretrain_samples += meta_info[meta_info['affect'] == 'Less Affected']['sample'].tolist()[:-2]
     pretrain_samples += meta_info[meta_info['affect'] == 'More Affected']['sample'].tolist()[:-2]
     pretrain_dataset = dataset_create(dir_path, pretrain_samples, args)
 
     dir_path2 = '/data/wuqitian/hest_data_xenium_protein_preprocess'
-    meta_info2 = pd.read_csv("../data/meta_info_xenium.csv")
+    meta_info2 = pd.read_csv("../../data/meta_info_xenium.csv")
     meta_info2 = meta_info2[meta_info2['organ'] != 'Lung']
     meta_info2 = meta_info2[~meta_info2['sample'].isin(
         ['TENX125', 'TENX124', 'TENX110', 'TENX111', 'TENX139', 'TENX96', 'TENX99', 'TENX138', 'TENX95', 'TENX140', 'TENX98', 'TENX97'])]
@@ -102,23 +101,6 @@ elif args.domain_protocol == 'lung+':
     pretrain_dataset2 = dataset_create(dir_path2, pretrain_samples2, args)
     pretrain_dataset.merge(pretrain_dataset2)
     pretrain_model_path1 = f'../model_checkpoints/{args.method}_pretrain_visium_all.pth'
-    # pretrain_model_path1 = f'../model_checkpoints/{args.method}_pretrain_xenium_lung+.pth'
-
-elif args.domain_protocol == 'kidney': # for kidney
-    dir_path = '/data/wuqitian/kidney_preprocess'
-    pretrain_samples = ['ctrl_02', 'ptD', 'ptE', 'ptF']
-    pretrain_dataset = dataset_create(dir_path, pretrain_samples, args)
-    pretrain_model_path1 = f'../model_checkpoints/{args.method}_pretrain_visium_all.pth'
-
-elif args.domain_protocol == 'wo_kidney': # for kidney
-    dir_path = '/data/wuqitian/hest_data_xenium_protein_preprocess'
-    meta_info = pd.read_csv("../data/meta_info_xenium.csv")
-    meta_info = meta_info[meta_info['tech'] == 'Xenium']
-    meta_info = meta_info[meta_info['organ'] != 'Kidney']
-    meta_info = meta_info[~meta_info['sample'].isin(['TENX125', 'TENX124'])]
-    pretrain_samples = meta_info['sample'].tolist()
-    pretrain_dataset = dataset_create(dir_path, pretrain_samples, args)
-    pretrain_model_path1 = f'../model_checkpoints/{args.method}_pretrain_visium_organ.pth'
 
 else:
     raise NotImplementedError

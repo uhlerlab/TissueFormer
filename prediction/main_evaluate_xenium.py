@@ -38,23 +38,26 @@ else:
 
 if args.domain_protocol == 'sample':
     dir_path = '/data/wuqitian/hest_data_xenium_protein_preprocess'
-    meta_info = pd.read_csv("../data/meta_info_xenium.csv")
+    meta_info = pd.read_csv("../../data/meta_info_xenium.csv")
     samples = ['TENX126', 'TENX123', 'TENX124', 'TENX121', 'TENX119', 'TENX118']
     filter_genes = True
 elif args.domain_protocol == 'bone':
     dir_path = '/data/wuqitian/hest_data_xenium_protein_preprocess'
-    meta_info = pd.read_csv("../data/meta_info_xenium.csv")
+    meta_info = pd.read_csv("../../data/meta_info_xenium.csv")
     samples = ['TENX137', 'TENX136', 'TENX135']
     filter_genes = False
 elif args.domain_protocol == 'lung':
     dir_path = '/data/wuqitian/lung_preprocess'
-    meta_info = pd.read_csv("../data/meta_info_lung.csv")
-    train_samples = meta_info[meta_info['affect'] == 'Unaffected']['sample'].tolist()[:-2]
-    train_samples += meta_info[meta_info['affect'] == 'Less Affected']['sample'].tolist()[:-2]
-    train_samples += meta_info[meta_info['affect'] == 'More Affected']['sample'].tolist()[:-2]
-
-    # test_samples = meta_info[~meta_info['sample'].isin(train_samples)]['sample'].tolist()
-    test_samples = train_samples
+    meta_info = pd.read_csv("../../data/meta_info_lung.csv")
+    train_samples = ['VUHD095', 'THD0011', 'VUHD116A', 'VUHD116B', 'VUHD069', 'TILD117LA', 'VUILD110LA', 'VUILD96LA',
+                     'VUILD102LA',
+                     'VUILD48LA1', 'VUILD78MA', 'VUILD115MA', 'VUILD104MA1', 'VUILD105MA1', 'VUILD96MA', 'VUILD105MA2',
+                     'VUILD107MA',
+                     'TILD175MA', 'VUILD104MA2', 'VUILD106MA']
+    test_samples = ['VUILD48LA2', 'THD0008', 'VUHD113', 'VUILD91MA', 'VUILD78LA', 'VUILD102MA']
+    test_samples += ['TILD315MA', 'TILD299MA', 'VUILD58MA',
+                    'TILD028LA', 'TILD111LA', 'TILD080LA', 'TILD130LA', 'VUILD49LA',
+                    'VUHD090', 'VUHD038']
     filter_genes = True
 else:
     raise NotImplementedError
@@ -139,16 +142,24 @@ if args.domain_protocol in ['sample', 'bone']:
             np.save(result_path + f'_{args.method}', y_pred)
         np.save(result_path + '_true', y_true)
 
-else:
-    train_datasets = dataset_create(dir_path, train_samples, args, filter_genes=filter_genes)
-    train_dataloader = DataLoader(train_datasets, batch_size=1, shuffle=True)
+else: # lung
+    # train_datasets = dataset_create(dir_path, train_samples, args, filter_genes=filter_genes)
+    # train_dataloader = DataLoader(train_datasets, batch_size=1, shuffle=True)
 
     for i, test_sample in enumerate(test_samples):
 
-        test_datasets = dataset_create(dir_path, test_sample, args, filter_genes=filter_genes)
-        test_dataloader = DataLoader(test_datasets, batch_size=1, shuffle=False)
+        # test_datasets = dataset_create(dir_path, test_sample, args, filter_genes=filter_genes)
+        # test_dataloader = DataLoader(test_datasets, batch_size=1, shuffle=False)
 
-        args.gene_total_num = test_datasets[0]['y'].shape[1]
+        # train_datasets = dataset_create_split(dir_path, test_sample, args, split='random', valid_prop=0., test_prop=0.5)
+        # train_dataloader = DataLoader(train_datasets, batch_size=1, shuffle=False)
+        # test_dataloader = train_dataloader
+
+        train_datasets = dataset_create_split(dir_path, test_sample, args, split='region', data_loader='lung', split_with_region=True)
+        train_dataloader = DataLoader(train_datasets, batch_size=1, shuffle=False)
+        test_dataloader = train_dataloader
+
+        args.gene_total_num = train_datasets[0]['y'].shape[1]
         print(args.gene_total_num)
         model_eval = parse_regression_method(args, device)
         if args.method in ['ours', 'ours-MLP', 'ours-KNN']:
@@ -185,10 +196,5 @@ else:
         result_path = f'/data/wuqitian/analysis_pred_data/gene_expression_prediction/{test_sample}'
         y_pred, y_true = evaluate(model_eval, test_dataloader, device, args, use_gene_idx=False, output_result=True)
         y_pred, y_true = y_pred.cpu().numpy(), y_true.cpu().numpy()
-        if model_version == 'large':
-            np.save(result_path+f'_{args.method}_large', y_pred)
-        elif model_version == 'visium':
-            np.save(result_path+f'_{args.method}_visium', y_pred)
-        else:
-            np.save(result_path + f'_{args.method}', y_pred)
+        np.save(result_path + f'_{args.method}_region', y_pred)
         np.save(result_path + '_true', y_true)

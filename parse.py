@@ -32,23 +32,9 @@ def parse_regression_method(args, device):
                                         use_residual=-args.enc1_no_residual).to(device)
         model = regression.MLP_Predict(encoder1, hidden_channels=args.enc1_hidden_channels,
                                        out_channels=args.gene_total_num).to(device)
-    elif args.method in 'ours-KNN':
-        encoder1 = encoders.Transformer(in_channels=args.image_emb_dim, hidden_channels=args.enc1_hidden_channels,
-                                        num_layers_prop=args.enc1_num_layers_prop,
-                                        num_layers_mlp=args.enc1_num_layers_mlp, num_attn_heads=args.enc1_num_attn_heads,
-                                        dropout=args.enc1_dropout, use_bn=-args.enc1_no_bn, use_graph=-args.enc1_no_graph,
-                                        use_residual=-args.enc1_no_residual).to(device)
-        model = regression.KNN_Predict(encoder1, hidden_channels=args.enc1_hidden_channels,
-                                       out_channels=args.gene_total_num, batch_size=args.batch_size,
-                                            num_neighbors=args.neighbor_num, device=device).to(device)
     elif args.method == 'hoptimus-MLP':
         encoder1 = encoders.Image_Encoder()
         model = regression.MLP_Predict(encoder1, hidden_channels=args.image_emb_dim, out_channels=args.gene_total_num).to(device)
-    elif args.method == 'hoptimus-KNN':
-        encoder1 = encoders.Image_Encoder()
-        model = regression.KNN_Predict(encoder1, hidden_channels=args.image_emb_dim,
-                                       out_channels=args.gene_total_num, batch_size=args.batch_size,
-                                            num_neighbors=args.neighbor_num, device=device).to(device)
     elif args.method == 'gigapath-MLP':
         assert (args.image_model=='gigapath')
         encoder1 = encoders.Image_Encoder()
@@ -61,19 +47,6 @@ def parse_regression_method(args, device):
         assert (args.image_model == 'pca')
         encoder1 = encoders.Image_Encoder()
         model = regression.MLP_Predict(encoder1, hidden_channels=args.image_emb_dim, out_channels=args.gene_total_num).to(device)
-    elif args.method == 'supervise-MLP':
-        encoder1 = encoders.MLP(in_channels=args.image_emb_dim, hidden_channels=args.enc1_hidden_channels, num_layers=args.enc1_num_layers_mlp,
-                                dropout=args.enc1_dropout).to(device)
-        model = regression.MLP_Predict(encoder1, hidden_channels=args.enc1_hidden_channels, out_channels=args.gene_total_num).to(device)
-    elif args.method == 'supervise-Transformer':
-        encoder1 = encoders.Transformer(in_channels=args.image_emb_dim, hidden_channels=args.enc1_hidden_channels,
-                                        num_layers_prop=args.enc1_num_layers_prop,
-                                        num_layers_mlp=args.enc1_num_layers_mlp, num_attn_heads=args.enc1_num_attn_heads,
-                                        dropout=args.enc1_dropout, use_bn=-args.enc1_no_bn, use_graph=-args.enc1_no_graph,
-                                        use_residual=-args.enc1_no_residual).to(device)
-        model = regression.MLP_Predict(encoder1, hidden_channels=args.enc1_hidden_channels, out_channels=args.gene_total_num).to(device)
-    elif args.method == 'mean-pooling':
-        model = regression.Mean_Pooling(out_channels=args.gene_total_num).to(device)
     else:
         raise ValueError('Invalid method')
     return model
@@ -99,22 +72,9 @@ def parse_classification_method(args, device):
                                         use_residual=-args.enc1_no_residual).to(device)
         model = classification.MLP_Predict(encoder1, hidden_channels=args.enc1_hidden_channels,
                                        out_channels=args.cell_type_num).to(device)
-    elif args.method in 'ours-KNN':
-        encoder1 = encoders.Transformer(in_channels=args.image_emb_dim, hidden_channels=args.enc1_hidden_channels,
-                                        num_layers_prop=args.enc1_num_layers_prop,
-                                        num_layers_mlp=args.enc1_num_layers_mlp, num_attn_heads=args.enc1_num_attn_heads,
-                                        dropout=args.enc1_dropout, use_bn=-args.enc1_no_bn, use_graph=-args.enc1_no_graph,
-                                        use_residual=-args.enc1_no_residual).to(device)
-        model = classification.KNN_Predict(encoder1, hidden_channels=args.enc1_hidden_channels,
-                                       out_channels=args.cell_type_num, batch_size=args.batch_size,
-                                            num_neighbors=args.neighbor_num, device=device).to(device)
     elif args.method == 'hoptimus-MLP':
         encoder1 = encoders.Image_Encoder()
         model = classification.MLP_Predict(encoder1, hidden_channels=args.image_emb_dim, out_channels=args.cell_type_num).to(device)
-    elif args.method == 'hoptimus-KNN':
-        encoder1 = encoders.Image_Encoder()
-        model = classification.KNN_Predict(encoder1, hidden_channels=args.image_emb_dim, out_channels=args.cell_type_num,
-                                           batch_size=args.batch_size, num_neighbors=args.neighbor_num, device=device).to(device)
     elif args.method == 'gigapath-MLP':
         assert (args.image_model == 'gigapath')
         encoder1 = encoders.Image_Encoder()
@@ -138,8 +98,9 @@ def parse_dual_method(args, gene_embeddings, device):
         encoder2 = encoders.MLP(in_channels=args.gene_emb_dim, hidden_channels=args.enc2_hidden_channels,
                                 num_layers=args.enc2_num_layers_mlp,
                                 dropout=args.enc2_dropout).to(device)
-        model = dual.MLP_Predict(encoder1, encoder2, gene_embeddings, hidden_channels=args.enc1_hidden_channels+args.enc2_hidden_channels, out_channels=args.cell_type_num,
-                               ge_trainable=args.gene_encoder_trainable, ge_pretrained=args.gene_encoder_pretrained).to(device)
+        model = dual.MLP_Predict(encoder1, encoder2, gene_embeddings, hidden_channels=args.enc1_hidden_channels, out_channels=args.cell_type_num,
+                               ge_trainable=args.gene_encoder_trainable, ge_pretrained=args.gene_encoder_pretrained,
+                                 no_gene_encoder=args.no_gene_encoder, no_image_encoder=args.no_image_encoder).to(device)
     else:
         raise ValueError('Invalid method')
     return model
@@ -163,12 +124,15 @@ def parser_add_main_args(parser):
     parser.add_argument('--hvg_gene_top', type=list, default=2000)
     parser.add_argument('--domain_protocol', type=str, default='organ')
     parser.add_argument('--evaluate_task', type=str, default='gene_regression',
-                        choices=['gene_regression', 'cell_type_classification', 'cell_lineage_classification',
+                        choices=['gene_regression', 'cell_type_classification',
                                  'he_annotation_classification', 'niche_classification',
-                                 'macrophage_identification', 'macrophage_classification'])
+                                 'region_time_prediction'])
     parser.add_argument('--he_annotation_type', type=str, default='multinucleated_cell')
     parser.add_argument('--niche_type', type=str, default='T1')
+    parser.add_argument('--cell_type', type=str, default='B-cell')
     parser.add_argument('--use_pred_gene', action='store_true')
+    parser.add_argument('--no_gene_encoder', action='store_true')
+    parser.add_argument('--no_image_encoder', action='store_true')
 
     # model architecture encoder 1
     parser.add_argument('--enc1_hidden_channels', type=int, default=1024)
@@ -190,7 +154,7 @@ def parser_add_main_args(parser):
     parser.add_argument('--enc2_no_graph', action='store_true')
     parser.add_argument('--enc2_no_residual', action='store_true')
 
-    # model pretraining
+    # model training
     parser.add_argument('--lr_pretrain', type=float, default=1e-5)
     parser.add_argument('--wd_pretrain', type=float, default=0.)
     parser.add_argument('--reg_weight', type=float, default=0.5)
