@@ -1,14 +1,12 @@
 # TissueFormer: A Multi-Modal Foundation Model for Spatial Biology
 
-Code for paper "Multi-Modal Foundation Model with Whole-Slide Attention Enables Transferrable Digital Pathology at Single-Cell Resolution".
-
 TissueFormer is pretrained over 1.2K paired tissue slides each of which includes a haematoxylin and eosin (H&E)-stained whole-slide image and its corresponding spatial transcriptomic profile. 
 From these tissue slides, we derive 17 million image-expression pairs and a unified gene panel that contains over 20K protein-coding genes for pretraining. 
 At inference time, the model can be applied to cross-modality generation (e.g., predict gene expression at cellular resolutions from histology images), predictive tasks at cell / region / slide levels, as well as analysis of intercellular communication and cell subtype identification.
 
 ## Model Overview
 
-<img width="700" alt="image" src="https://files.mdnice.com/user/23982/3c433a8d-faf4-45f7-a4bd-c599e3288077.png">
+<img width="1021" height="662" alt="image" src="https://github.com/user-attachments/assets/8edfa4e5-1e53-4bc6-8602-6d806723e3b1" />
 
 ## Datasets
 
