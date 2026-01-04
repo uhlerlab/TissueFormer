@@ -82,7 +82,7 @@ Pointers for nonillustrative figures:
 - `./analysis/analysis_lung_fibrosis.ipynb`: Fig. 5, Supplementary Fig. 9-10
 - `./analysis/analysis_breast_tumor.ipynb`: Supplementary Fig. 11
 
-## Apply TissueFormer to New Datasets
+## Apply TissueFormer to User-provided Datasets
 
 Applying TissueFormer to any new dataset typically involves the following steps:
 
@@ -92,7 +92,7 @@ Applying TissueFormer to any new dataset typically involves the following steps:
 4. Apply the model for prediction (e.g., predict gene expression from histology images)
 5. Apply the model for analysis (extract the cell embeddings and attention maps)
 
-### Application to Test Cases
+### Application Demo 1
 
 Here we use the test Xenium samples (TENX126, TENX123, TENX124, TENX121, TENX119, TENX118) as an example to demonstrate how to use our model on test data and reproduce the results.
 
@@ -126,9 +126,7 @@ The prediction results are stored into the path `./result/gene_expression_predic
 
 The visualization code for our results (Fig. 3a, Supplementary Fig. 5) is provided in this [demo1]().
 
-
-
-### Application to User-provided Datasets
+### Application Demo 1
 
 For applying TissueFormer to user-provided datasets, we provide a [demo2]() as an example.
 One can use this demo by replacing the dataset with one's own and following the instruction below. 
