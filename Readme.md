@@ -82,9 +82,9 @@ Pointers for nonillustrative figures:
 - `./analysis/analysis_lung_fibrosis.ipynb`: Fig. 5, Supplementary Fig. 9-10
 - `./analysis/analysis_breast_tumor.ipynb`: Supplementary Fig. 11
 
-## Apply TissueFormer to User-provided Datasets
+## Apply TissueFormer to New Datasets
 
-Applying TissueFormer to any new dataset typically involves the following steps.
+Applying TissueFormer to any new dataset typically involves the following steps:
 
 1. Load preprocessed dataset
 2. Load pretrained model checkpoints 
@@ -92,4 +92,77 @@ Applying TissueFormer to any new dataset typically involves the following steps.
 4. Apply the model for prediction (e.g., predict gene expression from histology images)
 5. Apply the model for analysis (extract the cell embeddings and attention maps)
 
-For detailed guideline, please refer to this [demo](https://github.com/qitianwu/TissueFormer/blob/main/demo.ipynb).
+### Application to Test Cases
+
+Here we use the test Xenium samples (TENX126, TENX123, TENX124, TENX121, TENX119, TENX118) as an example to demonstrate how to use our model on test data and reproduce the results.
+
+1. Load preprocessed dataset
+
+One can download the preprocessed data from this [Google Drive]() into a folder `./data`
+
+2. Load pretrained model checkpoints
+
+The same google drive repository contains the pretrained model checkpoints and one can download them into a folder `./checkpoint`.
+
+3. Apply the model for prediction
+
+Then one can refer to `./prediction/main_evaluate_xenium.py` and modify the directory paths storing the dataset, model checkpoint and results:
+```python
+    dir_path = './data/hest_data_xenium_protein_preprocess'
+
+    pretrain_model_path = './checkpoint/ours_pretrain_xenium_sample+_small.pth'
+
+    result_path = f'./result/gene_expression_prediction/{test_sample}'
+```
+After modifying the paths, one can run the following script to execute prediction on these test samples (the `batch_size` can be adjusted to balance the memory and time costs):
+```bash
+    python main_evaluate_xenium.py --domain_protocol sample --hvg_gene_tops 400 --method ours --gene_emb_dim 128 \
+  --enc1_hidden_channels 128 --enc2_hidden_channels 128 --enc1_num_layers_prop 2 --enc1_num_layers_mlp 2 --enc2_num_layers_mlp 1 \
+  --neighbor_num 1000 --batch_size 1000 --device 7
+```
+The prediction results are stored into the path `./result/gene_expression_prediction/`.
+
+4. Visualization
+
+The visualization code for our results (Fig. 3a, Supplementary Fig. 5) is provided in this [demo1]().
+
+
+
+### Application to User-provided Datasets
+
+For applying TissueFormer to user-provided datasets, we provide a [demo2]() as an example.
+One can use this demo by replacing the dataset with one's own and following the instruction below. 
+
+First, one needs to specify the directory path storing the dataset and load the dataset that is split for training and test:
+```python
+    dir_path = '/ewsc/wuqitian/lung_preprocess'
+    meta_info = pd.read_csv("../../data/meta_info_lung.csv")
+    
+    # train data can be used as the reference for in-context learning or for finetuning the model
+    train_samples = meta_info[meta_info['affect'] == 'Unaffected']['sample'].tolist()[:-1]
+    
+    # test data for evaluation
+    test_samples = meta_info[meta_info['affect'] == 'Unaffected']['sample'].tolist()[-1:]
+    
+    # create dataloader
+    train_datasets = dataset_create(dir_path, train_samples)
+    train_dataloader = DataLoader(train_datasets, batch_size=1, shuffle=True)
+    test_datasets = dataset_create(dir_path, test_samples)
+    test_dataloader = DataLoader(test_datasets, batch_size=1, shuffle=False)
+```
+
+Second, load the pretrained model checkpoint (one can choose the pretrained model version):
+```python 
+    pretrained_state_dict = torch.load('../../model_checkpoints/ours_pretrain_xenium_lung.pth') # one can choose the model version
+    encoder1_pretrained_dict = {k: v for k, v in pretrained_state_dict.items() if k.startswith("encoder1.")}
+    model_state_dict = model_ours.state_dict()
+    encoder1_model_dict = {k: v for k, v in model_state_dict.items() if k.startswith("encoder1.")}
+    for k, v in encoder1_pretrained_dict.items():
+        assert (k in encoder1_model_dict)
+        assert (v.size() == encoder1_model_dict[k].size())
+    model_state_dict.update(encoder1_pretrained_dict)
+    model_ours.load_state_dict(model_state_dict)
+```
+
+Later on, one can use the model for prediction, analysis (extract cell-level embeddings and attentions) or finetuning the model with downstream labels 
+by following the scripts in [demo2]().
