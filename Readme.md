@@ -8,6 +8,10 @@ At inference time, the model can be applied to cross-modality generation (e.g., 
 
 <img width="1021" height="662" alt="image" src="https://github.com/user-attachments/assets/8edfa4e5-1e53-4bc6-8602-6d806723e3b1" />
 
+The model is pretrained with a large corpus of spatial data ranging from diverse organs, species and health/disease states and can generalize to unseen tissues, organs, and species for prediction at cell, region and slide levels as well as informing spatial analysis and discovery.
+
+<img width="896" height="578" alt="image" src="https://github.com/user-attachments/assets/7d9998c9-7d9f-49d2-8333-421f090030c1" />
+
 ## Datasets
 
 All datasets used for the training and evaluation of our model are publicly available. The HEST-1K can be accessed [HuggingFace](https://huggingface.co/datasets/MahmoodLab/hest).
@@ -125,6 +129,8 @@ The prediction results are stored into the path `./result/gene_expression_predic
 4. Visualization
 
 The visualization code for our results (Fig. 3a, Supplementary Fig. 5) is provided in this [demo1]().
+
+<img width="801" height="338" alt="image" src="https://github.com/user-attachments/assets/0531f24a-54c9-43ba-8075-79946c44032e" />
 
 ### Application Demo 1
 
