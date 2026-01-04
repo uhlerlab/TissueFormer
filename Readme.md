@@ -98,7 +98,7 @@ Here we use the test Xenium samples (TENX126, TENX123, TENX124, TENX121, TENX119
 
 1. Load preprocessed dataset
 
-One can download the preprocessed data from this [Google Drive]() into a folder `./data`
+One can download the preprocessed data from this [Google Drive](https://drive.google.com/drive/folders/1ujmHmkAOfZtqpUwLSDIAU3KC2AbfpTpj?usp=sharing) into a folder `./data`
 
 2. Load pretrained model checkpoints
 
