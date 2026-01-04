@@ -128,13 +128,13 @@ The prediction results are stored into the path `./result/gene_expression_predic
 
 4. Visualization
 
-The visualization code for our results (Fig. 3a, Supplementary Fig. 5) is provided in this [demo1]().
+The visualization code for our results (Fig. 3a, Supplementary Fig. 5) is provided in this [demo1](https://github.com/uhlerlab/TissueFormer/blob/main/demo/apply_new_data_1.ipynb).
 
 <img width="801" height="338" alt="image" src="https://github.com/user-attachments/assets/0531f24a-54c9-43ba-8075-79946c44032e" />
 
 ### Application Demo 1
 
-For applying TissueFormer to user-provided datasets, we provide a [demo2]() as an example.
+For applying TissueFormer to user-provided datasets, we provide a [demo2](https://github.com/uhlerlab/TissueFormer/blob/main/demo/apply_new_data_2.ipynb) as an example.
 One can use this demo by replacing the dataset with one's own and following the instruction below. 
 
 First, one needs to specify the directory path storing the dataset and load the dataset that is split for training and test:
@@ -169,4 +169,4 @@ Second, load the pretrained model checkpoint (one can choose the pretrained mode
 ```
 
 Later on, one can use the model for prediction, analysis (extract cell-level embeddings and attentions) or finetuning the model with downstream labels 
-by following the scripts in [demo2]().
+by following the scripts in [demo2](https://github.com/uhlerlab/TissueFormer/blob/main/demo/apply_new_data_2.ipynb).
