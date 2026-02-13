@@ -132,7 +132,7 @@ The visualization code for our results (Fig. 3a, Supplementary Fig. 5) is provid
 
 <img width="801" height="338" alt="image" src="https://github.com/user-attachments/assets/0531f24a-54c9-43ba-8075-79946c44032e" />
 
-### Application Demo 1
+### Application Demo 2
 
 For applying TissueFormer to user-provided datasets, we provide a [demo2](https://github.com/uhlerlab/TissueFormer/blob/main/demo/apply_new_data_2.ipynb) as an example.
 One can use this demo by replacing the dataset with one's own and following the instruction below. 
